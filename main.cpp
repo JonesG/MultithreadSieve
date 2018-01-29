@@ -81,15 +81,14 @@ void ConsumerThreadFn()
     }
 }
 
-const uint32_t  NUM_THREADS = 32;
-
 uint32_t ParallelSieve( const std::uniform_int_distribution<> & dis,
                         const uint32_t                          uiNumInts)
 {
-    std::mt19937                gen(0);
+    std::thread                 ProducerThread(ProducerThreadFn, dis, uiNumInts);
+    uint32_t                    NUM_THREADS = std::thread::hardware_concurrency();
+    std::vector<std::thread>    ConsumerThreads;
 
-    std::thread ProducerThread(ProducerThreadFn, dis, uiNumInts);
-    std::thread ConsumerThreads[NUM_THREADS];
+    ConsumerThreads.resize(NUM_THREADS);
 
     for ( auto & t : ConsumerThreads )
     {
@@ -139,7 +138,10 @@ void main(void)
 
     std::uniform_int_distribution<> dis(1, MAX_RAND_INT);
 
-    //RunTest( dis, NUM_RAND_INTS, SerialSieve );
+    std::cout << "\nSerial\n";
+    RunTest( dis, NUM_RAND_INTS, SerialSieve );
+
+    std::cout << "\nParallel\n";
     RunTest( dis, NUM_RAND_INTS, ParallelSieve );
 
     std::cout << "\nPress any key\n";
